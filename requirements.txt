@@ -11,5 +11,6 @@ numpy==1.25.0
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl
 gspread==5.9.0
 oauth2client==4.1.3
-torch==2.0.1
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
 accelerate
