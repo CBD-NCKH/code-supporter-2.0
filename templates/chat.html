@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code supporter - Trò chuyện</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div id="chat-container">
+        <button id="theme-toggle-button">🌙</button>
+        <div id="welcome-message">
+            <h2>Chào mừng <span id="username-display"></span></h2>
+        </div>
+        <div id="chatbox">
+            <div id="messages"></div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
+            <button id="send-button">Gửi</button>
+        </div>
+    </div>    
+
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
