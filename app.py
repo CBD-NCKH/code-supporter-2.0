@@ -1,48 +1,16 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-import sqlite3
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from flask_session import Session
 from dotenv import load_dotenv
 import spacy
-from pyvi import ViTokenizer, ViPosTagger
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
-import torch
 import os
-import threading
 import json
+import requests
 
-# Tải mô hình StarCoder
-device = "cpu"
-print(f"Using device: {device}")
-auth_token = os.getenv("MODEL_KEY")
-checkpoint = "bigcode/starcoder"
+MODEL_SERVER_URL = os.getenv("MODEL_SERVER_URL")
 
-# Tải tokenizer
-tokenizer = AutoTokenizer.from_pretrained(checkpoint, token=auth_token)
-
-# Hàm tải mô hình
-def load_model():
-    global model
-    if model is None:  # Kiểm tra tránh tải lại
-        print("Loading model with quantization...")
-        model = torch.quantization.quantize_dynamic(
-            model=AutoModelForCausalLM.from_pretrained(checkpoint, token=auth_token),
-            qconfig_spec={torch.nn.Linear},
-            dtype=torch.qint8
-        )
-        print("Model loaded successfully.")
-
-model = None
-# Tải mô hình trong luồng riêng
-threading.Thread(target=load_model).start()
-
-
-
-# Tải mô hình ngôn ngữ spaCy
-nlp = spacy.load("en_core_web_sm")
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
@@ -86,15 +54,22 @@ def authenticate_user(sheet, username, password):
     return False
 
 # Hàm sinh văn bản từ mô hình StarCoder
-def generate_response_star_coder(prompt, max_length=5000, temperature=0.7):
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
-    outputs = model.generate(
-        inputs.input_ids,
-        max_length=max_length,
-        temperature=temperature,
-        pad_token_id=tokenizer.eos_token_id
-    )
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+def generate_response_from_server(prompt, max_length=5000, temperature=0.7):
+    try:
+        response = requests.post(
+            f"{MODEL_SERVER_URL}/generate",
+            json={
+                "prompt": prompt,
+                "max_length": max_length,
+                "temperature": temperature
+            }
+        )
+        if response.status_code == 200:
+            return response.json().get("generated_text", "")
+        else:
+            return f"Error from model server: {response.status_code}, {response.text}"
+    except Exception as e:
+        return f"Error connecting to model server: {e}"
 
 # Hàm lưu lịch sử hội thoại vào Google Sheets
 def save_to_google_sheet(sheet, username, role, content):
