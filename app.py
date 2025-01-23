@@ -85,7 +85,7 @@ def get_user_conversation(sheet, username, max_rows=4):
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
 # Khởi tạo ứng dụng Flask
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
 # Route mặc định để render giao diện
