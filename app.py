@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
-import spacy
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
