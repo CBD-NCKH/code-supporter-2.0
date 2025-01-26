@@ -1,4 +1,4 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import gspread
@@ -13,6 +13,11 @@ device = "cpu"
 print(f"Using device: {device}")
 model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 
+quantization_config = BitsAndBytesConfig(
+    load_in_8bit=True,  # Kích hoạt INT8 Quantization
+    llm_int8_enable_fp32_cpu_offload=True  # Cho phép chuyển tensor sang CPU nếu cần
+)
+
 # Tải tokenizer và model Qwen2.5-Coder-0.5B-Instruct
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -22,6 +27,8 @@ def load_model():
         print("Loading model with quantization...")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            quantization_config=quantization_config,
+            device_map="disk",
             torch_dtype="auto"
         )
         print("Model loaded successfully.")
@@ -72,7 +79,7 @@ def authenticate_user(sheet, username, password):
     return False
 
 # Hàm sinh văn bản từ mô hình Qwen2.5-Coder-0.5B-Instruct
-def generate_response_qwen(prompt, max_length=500):
+def generate_response_qwen(prompt, max_length=5000000):
     try:
         # Tạo template chat theo cú pháp của Qwen
         messages = [
