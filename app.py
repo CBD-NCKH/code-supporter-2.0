@@ -1,15 +1,32 @@
+from transformers import AutoModelForCausalLM, AutoTokenizer,
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from dotenv import load_dotenv
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
+import torch
 import os
+import threading
 import json
-import requests
 
-MODEL_SERVER_URL = os.getenv("MODEL_SERVER_URL")
+# Tải mô hình StarCoder
+device = "cpu"
+print(f"Using device: {device}")
 
+# Tải tokenizer
+tokenizer = AutoTokenizer.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
+
+# Hàm tải mô hình
+def load_model():
+    global model
+    if model is None:  # Kiểm tra tránh tải lại
+        print("Loading model with quantization...")
+        model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
+        print("Model loaded successfully.")
+
+model = None
+# Tải mô hình trong luồng riêng
+threading.Thread(target=load_model).start()
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
@@ -52,23 +69,25 @@ def authenticate_user(sheet, username, password):
             return True
     return False
 
-# Hàm sinh văn bản từ mô hình StarCoder
-def generate_response_from_server(prompt, max_length=5000, temperature=0.7):
+# Hàm sinh văn bản từ mô hình Replit Code V1-3B
+def generate_response_replit(prompt, max_length=500, temperature=0.7, top_p=0.95, top_k=4):
     try:
-        response = requests.post(
-            f"{MODEL_SERVER_URL}/generate",
-            json={
-                "prompt": prompt,
-                "max_length": max_length,
-                "temperature": temperature
-            }
-        )
-        if response.status_code == 200:
-            return response.json().get("generated_text", "")
-        else:
-            return f"Error from model server: {response.status_code}, {response.text}"
+        # Mã hóa đầu vào
+        inputs = tokenizer.encode(prompt, return_tensors="pt")        
+        # Sinh văn bản
+        outputs = model.generate(
+            inputs,
+            max_length=max_length,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            eos_token_id=tokenizer.eos_token_id,
+            num_return_sequences=1  # Trả về 1 chuỗi đầu ra
+        )        
+        # Giải mã kết quả đầu ra
+        return tokenizer.decode(outputs[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     except Exception as e:
-        return f"Error connecting to model server: {e}"
+        return f"Error generating response: {e}"
 
 # Hàm lưu lịch sử hội thoại vào Google Sheets
 def save_to_google_sheet(sheet, username, role, content):
@@ -85,7 +104,7 @@ def get_user_conversation(sheet, username, max_rows=4):
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
 
 # Khởi tạo ứng dụng Flask
-app = Flask(__name__, static_folder='static', template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
 # Route mặc định để render giao diện
