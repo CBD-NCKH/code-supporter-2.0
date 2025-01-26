@@ -5,6 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
 import torch
+from optimum.bettertransformer import BetterTransformer
 import os
 import threading
 import json
@@ -13,10 +14,12 @@ device = "cpu"
 print(f"Using device: {device}")
 model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 
-quantization_config = BitsAndBytesConfig(
-    load_in_8bit=True,  # Kích hoạt INT8 Quantization
-    llm_int8_enable_fp32_cpu_offload=True  # Cho phép chuyển tensor sang CPU nếu cần
-)
+# Cấu hình quantization INT4
+quantization_config = {
+    "load_in_4bit": True,                  # Bật quantization INT4
+    "bnb_4bit_quant_type": "nf4",          # Chọn loại INT4 (Normal Float 4)
+    "bnb_4bit_use_double_quant": True,     # Sử dụng Double Quantization để tối ưu
+}
 
 # Tải tokenizer và model Qwen2.5-Coder-0.5B-Instruct
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -27,11 +30,13 @@ def load_model():
         print("Loading model with quantization...")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            device_map="auto",                     # Tự động phân bổ thiết bị (CPU/GPU)
             quantization_config=quantization_config,
-            device_map="disk",
-            torch_dtype="auto"
+            torch_dtype=torch.float16              # Chuyển sang FP16 để tối ưu thêm
         )
         print("Model loaded successfully.")
+        model = BetterTransformer.transform(model)
+        print("Better mmodel loaded successfully.")
 
 model = None
 # Tải mô hình trong luồng riêng
@@ -79,7 +84,7 @@ def authenticate_user(sheet, username, password):
     return False
 
 # Hàm sinh văn bản từ mô hình Qwen2.5-Coder-0.5B-Instruct
-def generate_response_qwen(prompt, max_length=5000000):
+def generate_response_qwen(prompt, max_length=5000):
     try:
         # Tạo template chat theo cú pháp của Qwen
         messages = [
