@@ -14,7 +14,7 @@ print(f"Using device: {device}")
 
 # Tải tokenizer
 tokenizer = AutoTokenizer.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True, load_in_4bit=True, low_cpu_mem_usage=True)
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
