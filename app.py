@@ -9,24 +9,12 @@ import os
 import threading
 import json
 
-# Tải mô hình StarCoder
 device = "cpu"
 print(f"Using device: {device}")
 
 # Tải tokenizer
 tokenizer = AutoTokenizer.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
-
-# Hàm tải mô hình
-def load_model():
-    global model
-    if model is None:  # Kiểm tra tránh tải lại
-        print("Loading model with quantization...")
-        model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
-        print("Model loaded successfully.")
-
-model = None
-# Tải mô hình trong luồng riêng
-threading.Thread(target=load_model).start()
+model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
