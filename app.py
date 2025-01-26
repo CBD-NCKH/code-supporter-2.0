@@ -12,9 +12,14 @@ import json
 device = "cpu"
 print(f"Using device: {device}")
 
-# Tải tokenizer
-tokenizer = AutoTokenizer.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained('replit/replit-code-v1-3b', trust_remote_code=True, load_in_4bit=True, low_cpu_mem_usage=True)
+# Tải tokenizer và model Qwen2.5-Coder-0.5B-Instruct
+model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
@@ -57,23 +62,35 @@ def authenticate_user(sheet, username, password):
             return True
     return False
 
-# Hàm sinh văn bản từ mô hình Replit Code V1-3B
-def generate_response_replit(prompt, max_length=500, temperature=0.7, top_p=0.95, top_k=4):
+# Hàm sinh văn bản từ mô hình Qwen2.5-Coder-0.5B-Instruct
+def generate_response_qwen(prompt, max_length=500):
     try:
+        # Tạo template chat theo cú pháp của Qwen
+        messages = [
+            {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+        # Tạo text từ template
+        text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
         # Mã hóa đầu vào
-        inputs = tokenizer.encode(prompt, return_tensors="pt")        
+        model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+        
         # Sinh văn bản
-        outputs = model.generate(
-            inputs,
-            max_length=max_length,
-            temperature=temperature,
-            top_p=top_p,
-            top_k=top_k,
-            eos_token_id=tokenizer.eos_token_id,
-            num_return_sequences=1  # Trả về 1 chuỗi đầu ra
-        )        
-        # Giải mã kết quả đầu ra
-        return tokenizer.decode(outputs[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        generated_ids = model.generate(
+            **model_inputs,
+            max_new_tokens=max_length
+        )
+        # Cắt bỏ phần đầu (prompt gốc)
+        generated_ids = [
+            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+        ]
+        # Giải mã đầu ra
+        response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return response
     except Exception as e:
         return f"Error generating response: {e}"
 
@@ -86,7 +103,7 @@ def save_to_google_sheet(sheet, username, role, content):
     sheet.append_row(row)  # Thêm hàng mới vào Google Sheets
 
 # Hàm lấy hội thoại gần nhất của người dùng
-def get_user_conversation(sheet, username, max_rows=4):
+def get_user_conversation(sheet, username, max_rows=88):
     rows = sheet.get_all_values()
     user_rows = [row for row in rows if len(row) >= 3 and row[0] == username]
     return user_rows[-max_rows:] if len(user_rows) > max_rows else user_rows
@@ -139,10 +156,6 @@ def login():
 @app.route('/api', methods=['POST'])
 def api():
     try:
-        # Kiểm tra nếu mô hình chưa tải xong
-        if model is None:
-            return jsonify({"error": "Model is still loading. Please try again later."}), 503
-        
         username = request.args.get('username')
         if not username:
             return jsonify({"error": "Unauthorized. Username is missing."}), 401
@@ -159,7 +172,7 @@ def api():
             f"Câu hỏi của người dùng: {user_message}\n\n"
         )
 
-        bot_reply = generate_response_star_coder(prompt)
+        bot_reply = generate_response_qwen(prompt)
 
         save_to_google_sheet(sheet, username, "user", user_message)
         save_to_google_sheet(sheet, username, "assistant", bot_reply)
