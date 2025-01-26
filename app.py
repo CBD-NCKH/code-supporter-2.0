@@ -11,14 +11,24 @@ import json
 
 device = "cpu"
 print(f"Using device: {device}")
+model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 
 # Tải tokenizer và model Qwen2.5-Coder-0.5B-Instruct
-model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype="auto"
-)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+def load_model():
+    global model
+    if model is None:  # Kiểm tra tránh tải lại
+        print("Loading model with quantization...")
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype="auto"
+        )
+        print("Model loaded successfully.")
+
+model = None
+# Tải mô hình trong luồng riêng
+threading.Thread(target=load_model).start()
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
