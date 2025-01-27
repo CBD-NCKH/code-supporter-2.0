@@ -209,7 +209,7 @@ def api():
 if __name__ == '__main__':
     # Kiểm tra và tải các tệp mô hình
     if not os.access(".", os.W_OK):
-    print("No write access to the current directory.")
+        print("No write access to the current directory.")
 
     if os.path.exists("./qwen_int4_model"):
         print("Clearing existing model directory...")
