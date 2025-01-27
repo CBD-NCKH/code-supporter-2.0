@@ -5,42 +5,39 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import hashlib
 import torch
-from optimum.bettertransformer import BetterTransformer
 import os
 import threading
 import json
+import gdown
 
-device = "cpu"
-print(f"Using device: {device}")
-model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
-
-# Cấu hình quantization INT4
-quantization_config = {
-    "load_in_4bit": True,                  # Bật quantization INT4
-    "bnb_4bit_quant_type": "nf4",          # Chọn loại INT4 (Normal Float 4)
-    "bnb_4bit_use_double_quant": True,     # Sử dụng Double Quantization để tối ưu
+model_files = {
+    "pytorch_model.bin": "https://drive.google.com/uc?id=1-0BV5iou95zjdb_8Z7i4CjEEV-i-fanq",
+    "config.json": "https://drive.google.com/uc?id=1-4rrSduBQZwlN0hx3v4VLH-bBAcrGzxp",
+    "generation_config.json": "https://drive.google.com/uc?id=1-4V1REaRUNlKvVxpXwsM8dxxXxHWk2cx"
 }
 
-# Tải tokenizer và model Qwen2.5-Coder-0.5B-Instruct
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer_files = {
+    "tokenizer.json": "https://drive.google.com/uc?id=1-6ofOPq5hd-yF64bq63kVJSzmNvo9zZK",
+    "vocab.json": "https://drive.google.com/uc?id=1-8Bb9A1vPFkD7vv2-VvEd58l-AAAkV8C",
+    "merges.txt": "https://drive.google.com/uc?id=1-86WGPueqxTPEapQF7VMkXN73KTrQHXw",
+    "tokenizer_config.json": "https://drive.google.com/uc?id=1-FD9bAkuuqTm7KIlL0NGmhNXdF8cm-yD",
+    "added_tokens.json": "https://drive.google.com/uc?id=1-EyYAhw8HQOFfJQ0umbqNreL-kfA1BHt",
+    "special_tokens_map.json": "https://drive.google.com/uc?id=1-FD4ONSG8jhSxwfmI1b-W5PoHrH6j8YP"
+}
 
-def load_model():
-    global model
-    if model is None:  # Kiểm tra tránh tải lại
-        print("Loading model with quantization...")
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",                     # Tự động phân bổ thiết bị (CPU/GPU)
-            quantization_config=quantization_config,
-            torch_dtype=torch.float16              # Chuyển sang FP16 để tối ưu thêm
-        )
-        print("Model loaded successfully.")
-        model = BetterTransformer.transform(model)
-        print("Better mmodel loaded successfully.")
-
+tokenizer = None
 model = None
-# Tải mô hình trong luồng riêng
-threading.Thread(target=load_model).start()
+
+def initialize_model():
+    global tokenizer, model
+    if tokenizer is None or model is None:
+        print("Initializing model...")
+        tokenizer = AutoTokenizer.from_pretrained("./qwen_int4_model/tokenizer")
+        model = AutoModelForCausalLM.from_pretrained(
+            "./qwen_int4_model/model",
+            torch_dtype=torch.float16
+        )
+        print("Model loaded into RAM.")
 
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
@@ -177,6 +174,10 @@ def login():
 @app.route('/api', methods=['POST'])
 def api():
     try:
+        global model, tokenizer
+        if model is None or tokenizer is None:
+            return "Model is still loading, please try again later.", 503
+        
         username = request.args.get('username')
         if not username:
             return jsonify({"error": "Unauthorized. Username is missing."}), 401
@@ -205,5 +206,33 @@ def api():
 
 
 if __name__ == '__main__':
+    # Kiểm tra và tải các tệp mô hình
+    print("Checking and downloading model files if necessary...")
+    if not os.path.exists("./qwen_int4_model/model"):
+        os.makedirs("./qwen_int4_model/model", exist_ok=True)
+        for file_name, file_url in model_files.items():
+            if not os.path.exists(f"./qwen_int4_model/model/{file_name}"):
+                try:
+                    gdown.download(file_url, f"./qwen_int4_model/model/{file_name}", quiet=False)
+                except Exception as e:
+                    print(f"Failed to download {file_name}: {e}")
+
+    if not os.path.exists("./qwen_int4_model/tokenizer"):
+        os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
+        for file_name, file_url in tokenizer_files.items():
+            if not os.path.exists(f"./qwen_int4_model/tokenizer/{file_name}"):
+                try:
+                    gdown.download(file_url, f"./qwen_int4_model/tokenizer/{file_name}", quiet=False)
+                except Exception as e:
+                    print(f"Failed to download {file_name}: {e}")
+
+    # Sau khi tải xong, gọi initialize_model để đưa mô hình vào RAM
+    print("Loading model into RAM. Please wait...")
+    initialize_model()
+    print("Model loaded. Starting the application...")
+
+    # Chạy ứng dụng Flask
     port = int(os.environ.get("PORT", 5000))  
     app.run(host='0.0.0.0', port=port)
+
+
