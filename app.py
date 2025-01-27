@@ -9,6 +9,7 @@ import os
 import threading
 import json
 import gdown
+import shutil
 
 model_files = {
     "pytorch_model.bin": "https://drive.google.com/uc?id=1-0BV5iou95zjdb_8Z7i4CjEEV-i-fanq",
@@ -207,24 +208,29 @@ def api():
 
 if __name__ == '__main__':
     # Kiểm tra và tải các tệp mô hình
-    print("Checking and downloading model files if necessary...")
-    if not os.path.exists("./qwen_int4_model/model"):
-        os.makedirs("./qwen_int4_model/model", exist_ok=True)
-        for file_name, file_url in model_files.items():
-            if not os.path.exists(f"./qwen_int4_model/model/{file_name}"):
-                try:
-                    gdown.download(file_url, f"./qwen_int4_model/model/{file_name}", quiet=False)
-                except Exception as e:
-                    print(f"Failed to download {file_name}: {e}")
+    if not os.access(".", os.W_OK):
+    print("No write access to the current directory.")
 
-    if not os.path.exists("./qwen_int4_model/tokenizer"):
-        os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
-        for file_name, file_url in tokenizer_files.items():
-            if not os.path.exists(f"./qwen_int4_model/tokenizer/{file_name}"):
-                try:
-                    gdown.download(file_url, f"./qwen_int4_model/tokenizer/{file_name}", quiet=False)
-                except Exception as e:
-                    print(f"Failed to download {file_name}: {e}")
+    if os.path.exists("./qwen_int4_model"):
+        print("Clearing existing model directory...")
+        shutil.rmtree("./qwen_int4_model")
+
+    print("Checking and downloading model files if necessary...")
+    os.makedirs("./qwen_int4_model/model", exist_ok=True)
+    for file_name, file_url in model_files.items():
+        if not os.path.exists(f"./qwen_int4_model/model/{file_name}"):
+            try:
+                gdown.download(file_url, f"./qwen_int4_model/model/{file_name}", quiet=False)
+            except Exception as e:
+                print(f"Failed to download {file_name}: {e}")
+
+    os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
+    for file_name, file_url in tokenizer_files.items():
+        if not os.path.exists(f"./qwen_int4_model/tokenizer/{file_name}"):
+            try:
+                gdown.download(file_url, f"./qwen_int4_model/tokenizer/{file_name}", quiet=False)
+            except Exception as e:
+                print(f"Failed to download {file_name}: {e}")
 
     # Sau khi tải xong, gọi initialize_model để đưa mô hình vào RAM
     print("Loading model into RAM. Please wait...")
