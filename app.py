@@ -55,31 +55,27 @@ def initialize_model():
 
 # Kiểm tra & tải các tệp cần thiết
 def check_and_download_files():
-    # Nếu model directory đã tồn tại, xóa nó đi
+    global tokenizer, model  
+
     if os.path.exists("./qwen_int4_model"):
         print("⚠️ Clearing existing model directory...")
         shutil.rmtree("./qwen_int4_model")
 
     print("🔍 Checking and downloading model files if necessary...")
-    # Tạo thư mục model và tải các file model nếu cần
     os.makedirs("./qwen_int4_model/model", exist_ok=True)
     for file_name, file_url in model_files.items():
         output_path = f"./qwen_int4_model/model/{file_name}"
         if not os.path.exists(output_path):
             download_file_from_google_drive(file_url, output_path)
 
-    # Tạo thư mục tokenizer và tải các file tokenizer nếu cần
     os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
     for file_name, file_url in tokenizer_files.items():
         output_path = f"./qwen_int4_model/tokenizer/{file_name}"
         if not os.path.exists(output_path):
             download_file_from_google_drive(file_url, output_path)
 
-    # Nếu tokenizer hoặc model chưa được khởi tạo, thì khởi tạo chúng
     if tokenizer is None or model is None:
         print("Initializing model...")
-        # Nếu biến tokenizer và model là biến toàn cục, nhớ khai báo global
-        global tokenizer, model
         tokenizer = AutoTokenizer.from_pretrained("./qwen_int4_model/tokenizer")
         model = AutoModelForCausalLM.from_pretrained(
             "./qwen_int4_model/model",
