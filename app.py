@@ -1,4 +1,4 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import gspread
@@ -8,8 +8,9 @@ import torch
 import os
 import threading
 import json
-import gdown
 import shutil
+import requests
+import json
 
 model_files = {
     "pytorch_model.bin": "https://drive.google.com/uc?id=1-0BV5iou95zjdb_8Z7i4CjEEV-i-fanq",
@@ -29,9 +30,48 @@ tokenizer_files = {
 tokenizer = None
 model = None
 
+# Hàm tải tệp từ Google Drive
+def download_file_from_google_drive(file_url, output):
+    print(f"Downloading {output} from {file_url}...")
+    response = requests.get(file_url, stream=True)
+    if response.status_code == 200:
+        with open(output, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print(f"✅ Downloaded: {output}")
+    else:
+        print(f"❌ Failed to download {output}: {response.status_code}")
+
+# Khởi tạo mô hình
 def initialize_model():
     global tokenizer, model
     if tokenizer is None or model is None:
+        print("Initializing model...")
+        tokenizer = AutoTokenizer.from_pretrained("./qwen_int4_model/tokenizer")
+        model = AutoModelForCausalLM.from_pretrained(
+            "./qwen_int4_model/model",
+            torch_dtype=torch.float16
+        )
+        print("✅ Model loaded into RAM.")
+
+# Kiểm tra & tải các tệp cần thiết
+def check_and_download_files():
+    if os.path.exists("./qwen_int4_model"):
+        print("⚠️ Clearing existing model directory...")
+        shutil.rmtree("./qwen_int4_model")
+
+    print("🔍 Checking and downloading model files if necessary...")
+    os.makedirs("./qwen_int4_model/model", exist_ok=True)
+    for file_name, file_url in model_files.items():
+        output_path = f"./qwen_int4_model/model/{file_name}"
+        if not os.path.exists(output_path):
+            download_file_from_google_drive(file_url, output_path)
+
+    os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
+    for file_name, file_url in tokenizer_files.items():
+        output_path = f"./qwen_int4_model/tokenizer/{file_name}"
+        if not os.path.exists(output_path):
+            download_file_from_google_drive(file_url, output_path)    if tokenizer is None or model is None:
         print("Initializing model...")
         tokenizer = AutoTokenizer.from_pretrained("./qwen_int4_model/tokenizer")
         model = AutoModelForCausalLM.from_pretrained(
@@ -206,36 +246,15 @@ def api():
         return jsonify({"error": "Có lỗi xảy ra khi kết nối mô hình."}), 500
 
 
+
 if __name__ == '__main__':
-    # Kiểm tra và tải các tệp mô hình
-    if not os.access(".", os.W_OK):
-        print("No write access to the current directory.")
+    # Kiểm tra & tải các tệp cần thiết
+    check_and_download_files()
 
-    if os.path.exists("./qwen_int4_model"):
-        print("Clearing existing model directory...")
-        shutil.rmtree("./qwen_int4_model")
-
-    print("Checking and downloading model files if necessary...")
-    os.makedirs("./qwen_int4_model/model", exist_ok=True)
-    for file_name, file_url in model_files.items():
-        if not os.path.exists(f"./qwen_int4_model/model/{file_name}"):
-            try:
-                gdown.download(file_url, f"./qwen_int4_model/model/{file_name}", quiet=False)
-            except Exception as e:
-                print(f"Failed to download {file_name}: {e}")
-
-    os.makedirs("./qwen_int4_model/tokenizer", exist_ok=True)
-    for file_name, file_url in tokenizer_files.items():
-        if not os.path.exists(f"./qwen_int4_model/tokenizer/{file_name}"):
-            try:
-                gdown.download(file_url, f"./qwen_int4_model/tokenizer/{file_name}", quiet=False)
-            except Exception as e:
-                print(f"Failed to download {file_name}: {e}")
-
-    # Sau khi tải xong, gọi initialize_model để đưa mô hình vào RAM
-    print("Loading model into RAM. Please wait...")
+    # Tải mô hình vào RAM
+    print("🔄 Loading model into RAM. Please wait...")
     initialize_model()
-    print("Model loaded. Starting the application...")
+    print("🚀 Model loaded. Starting the application...")
 
     # Chạy ứng dụng Flask
     port = int(os.environ.get("PORT", 5000))  
