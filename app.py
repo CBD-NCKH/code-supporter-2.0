@@ -9,7 +9,7 @@ import json
 
 # Khởi tạo InferenceClient của DeepSeek
 client = InferenceClient(
-    provider="replicate",
+    provider="togethertogether",
     api_key = os.getenv("KEY")
 )
 
