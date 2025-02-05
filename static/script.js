@@ -39,19 +39,19 @@ if (authContainer) {
         loginButton.addEventListener('click', async () => {
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-    
+
             try {
                 console.log("🔍 Sending login request:", { username, password }); // Debug log
-    
+
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
                 });
-    
+
                 const text = await response.text(); // Đọc raw text trước
                 console.log("🔍 Server response:", text); // Debug log
-    
+
                 try {
                     const data = JSON.parse(text); // Chuyển thành JSON
                     if (response.ok) {
@@ -68,7 +68,7 @@ if (authContainer) {
                 alert('Không thể kết nối đến server.');
             }
         });
-    }    
+    }
 }
 
 // Logic cho trang chat
@@ -117,7 +117,7 @@ if (chatContainer) {
         }
     }
 
-    // Hàm thêm tin nhắn vào giao diện
+    // Hàm thêm tin nhắn vào giao diện (CÓ TÍCH HỢP CHỨC NĂNG PHÁT HIỆN CODE)
     function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
@@ -126,42 +126,37 @@ if (chatContainer) {
             content = marked.parse(content);
         }
 
-        if (sender === 'bot') {
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = content;
-            const nodes = Array.from(tempContainer.childNodes);
-
-            let currentNodeIndex = 0;
-            let currentCharIndex = 0;
-
-            const typeEffect = setInterval(() => {
-                if (currentNodeIndex < nodes.length) {
-                    const currentNode = nodes[currentNodeIndex];
-                    if (currentNode.nodeType === Node.TEXT_NODE) {
-                        if (currentCharIndex < currentNode.textContent.length) {
-                            messageDiv.appendChild(document.createTextNode(currentNode.textContent[currentCharIndex]));
-                            currentCharIndex++;
-                        } else {
-                            currentCharIndex = 0;
-                            currentNodeIndex++;
-                        }
-                    } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
-                        messageDiv.appendChild(currentNode.cloneNode(true));
-                        currentNodeIndex++;
-                    }
-                } else {
-                    clearInterval(typeEffect);
-                }
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }, typingSpeed);
-        } else {
-            messageDiv.innerHTML = content;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
+        messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // 🛠 **Tự động phát hiện code và thêm nút "Sao chép"**
+        let codeBlocks = content.match(/```([\s\S]*?)```/g);
+        if (codeBlocks) {
+            codeBlocks.forEach((block) => {
+                let codeContent = block.replace(/```[\w]*\n?/, "").replace(/```/, "").trim(); // Xóa dấu ```
+                let formattedCode = `
+                    <div class="code-container">
+                        <pre><code>${codeContent}</code></pre>
+                        <button class="copy-btn">📋 Sao chép</button>
+                    </div>
+                `;
+
+                // Thay thế đoạn code trong nội dung tin nhắn
+                messageDiv.innerHTML = messageDiv.innerHTML.replace(block, formattedCode);
+            });
+
+            // Thêm sự kiện "Sao chép" cho nút
+            messageDiv.querySelectorAll(".copy-btn").forEach((button) => {
+                button.addEventListener("click", () => {
+                    let code = button.previousElementSibling.innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = "✅ Đã sao chép!";
+                        setTimeout(() => (button.innerText = "📋 Sao chép"), 2000);
+                    }).catch(err => console.error("Lỗi sao chép:", err));
+                });
+            });
+        }
     }
 
     // Hàm gửi yêu cầu tới API

@@ -313,3 +313,30 @@ body.light-mode .typing-indicator span {
 body.light-mode #welcome-message {
     color: #000;
 }
+
+.code-container {
+    position: relative;
+    background: #2d2d2d;
+    color: white;
+    border-radius: 5px;
+    padding: 10px;
+    overflow-x: auto;
+    font-family: monospace;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.copy-btn:hover {
+    background: #45a049;
+}
