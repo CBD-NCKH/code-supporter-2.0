@@ -134,34 +134,31 @@ if (chatContainer) {
         // 🛠 **Tự động phát hiện và sửa lỗi hiển thị code**
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
-                // ✅ Fix lỗi mất xuống dòng và mất nội dung
-                let codeContent = codeBlock.innerText.trim(); 
-                if (codeContent.length === 0) {
-                    codeBlock.innerText = "⚠ Lỗi: Không có nội dung code!";
-                    return;
-                }
-    
+                console.log("🔍 Tìm thấy code block trước khi thay thế:", codeBlock.innerText);
+        
+                const container = document.createElement("div");
+                container.classList.add("code-container");
+        
                 const copyButton = document.createElement("button");
                 copyButton.classList.add("copy-btn");
                 copyButton.innerText = "📋 Sao chép";
-    
+        
                 copyButton.addEventListener("click", () => {
                     navigator.clipboard.writeText(codeBlock.innerText).then(() => {
                         copyButton.innerText = "✅ Đã sao chép!";
                         setTimeout(() => (copyButton.innerText = "📋 Sao chép"), 2000);
                     }).catch(err => console.error("Lỗi sao chép:", err));
                 });
-    
-                // ✅ Tạo container chứa code và nút sao chép
-                const container = document.createElement("div");
-                container.classList.add("code-container");
+        
+                container.appendChild(codeBlock.cloneNode(true)); // Sử dụng clone để không mất nội dung
                 container.appendChild(copyButton);
-                container.appendChild(codeBlock);
-    
-                // ✅ Thay thế code block cũ bằng container mới
+        
                 codeBlock.parentElement.replaceWith(container);
+        
+                console.log("✅ Sau khi thay thế:", container.outerHTML);
             });
-        }, 100); // Đợi 100ms để Markdown hoàn thành parse
+        }, 100);
+        
     }    
 
     // Hàm gửi yêu cầu tới API
