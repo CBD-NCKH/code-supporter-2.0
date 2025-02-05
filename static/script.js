@@ -121,9 +121,10 @@ if (chatContainer) {
     function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
-    
+        
         if (isMarkdown) {
-            content = marked.parse(content); // Parse Markdown trước
+            // ✅ Parse Markdown và bảo toàn dấu xuống dòng
+            content = marked.parse(content).replace(/<pre>/g, '<pre class="code-container">');
         }
     
         messageDiv.innerHTML = content;
@@ -133,6 +134,10 @@ if (chatContainer) {
         // 🛠 **Tự động phát hiện code sau khi nội dung được render**
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
+                // ✅ Fix lỗi mất xuống dòng
+                codeBlock.style.whiteSpace = "pre-wrap"; // Giữ format xuống dòng
+                codeBlock.style.wordBreak = "break-word"; // Ngăn code bị cắt
+    
                 const copyButton = document.createElement("button");
                 copyButton.classList.add("copy-btn");
                 copyButton.innerText = "📋 Sao chép";
@@ -144,20 +149,17 @@ if (chatContainer) {
                     }).catch(err => console.error("Lỗi sao chép:", err));
                 });
     
-                // Tạo container chứa code và nút sao chép
+                // ✅ Tạo container chứa code và nút sao chép
                 const container = document.createElement("div");
                 container.classList.add("code-container");
-    
-                // **Fix lỗi mất xuống dòng**
-                codeBlock.style.whiteSpace = "pre-wrap"; // Giữ nguyên format xuống dòng
-                container.appendChild(codeBlock);
                 container.appendChild(copyButton);
+                container.appendChild(codeBlock);
     
-                // Thay thế code block cũ bằng container mới
+                // ✅ Thay thế code block cũ bằng container mới
                 codeBlock.parentElement.replaceWith(container);
             });
         }, 100); // Đợi 100ms để Markdown hoàn thành parse
-    }
+    }    
 
     // Hàm gửi yêu cầu tới API
     async function sendMessage() {
