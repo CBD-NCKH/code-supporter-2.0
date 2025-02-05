@@ -121,21 +121,13 @@ if (chatContainer) {
     function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
-    
+        
         if (isMarkdown) {
             // ✅ Chuyển Markdown thành HTML và bảo toàn code block
             content = marked.parse(content);
         }
     
-        // 🛠 Kiểm tra xem nội dung có phải là code không
-        if (content.startsWith("```") && content.endsWith("```")) {
-            content = content.replace(/```/g, ""); // Xóa dấu ```
-            messageDiv.innerHTML = `<pre><code>${content}</code></pre>`;
-        } else {
-            // 🛠 Nếu không phải code, giữ xuống dòng bằng <br>
-            messageDiv.innerHTML = content.replace(/\n/g, '<br>');
-        }
-    
+        messageDiv.innerHTML = content.replace(/\n/g, '<br>');
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     
@@ -143,31 +135,31 @@ if (chatContainer) {
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
                 console.log("🔍 Tìm thấy code block trước khi thay thế:", codeBlock.innerText);
-    
+        
                 const container = document.createElement("div");
                 container.classList.add("code-container");
-    
+        
                 const copyButton = document.createElement("button");
                 copyButton.classList.add("copy-btn");
                 copyButton.innerText = "📋 Sao chép";
-    
+        
                 copyButton.addEventListener("click", () => {
                     navigator.clipboard.writeText(codeBlock.innerText).then(() => {
                         copyButton.innerText = "✅ Đã sao chép!";
                         setTimeout(() => (copyButton.innerText = "📋 Sao chép"), 2000);
                     }).catch(err => console.error("Lỗi sao chép:", err));
                 });
-    
+        
                 container.appendChild(codeBlock.cloneNode(true)); // Sử dụng clone để không mất nội dung
                 container.appendChild(copyButton);
-    
+        
                 codeBlock.parentElement.replaceWith(container);
-    
+        
                 console.log("✅ Sau khi thay thế:", container.outerHTML);
             });
         }, 100);
-    }
-    
+        
+    }    
 
     // Hàm gửi yêu cầu tới API
     async function sendMessage() {
