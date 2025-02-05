@@ -106,18 +106,28 @@ def chat():
         return "Missing username parameter", 400  
     return render_template("chat.html", username=username)
 
-# API xử lý đăng ký
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
-    sheet = connect_google_sheet("CodesupporterHistory")
-    success, message = create_account(sheet, username, password)
-    if success:
-        return jsonify({"redirect_url": f"/chat?username={username}"}), 201
-    else:
-        return jsonify({"error": message}), 400
+    try:
+        data = request.json
+        print(f"🔍 Register request received: {data}")  # Debug log
+
+        if not data or "username" not in data or "password" not in data:
+            return jsonify({"error": "Thiếu thông tin đăng ký."}), 400
+
+        username = data.get("username")
+        password = data.get("password")
+
+        sheet = connect_google_sheet("CodesupporterHistory")
+        success, message = create_account(sheet, username, password)
+
+        if success:
+            return jsonify({"redirect_url": f"/chat?username={username}"}), 201
+        else:
+            return jsonify({"error": message}), 400
+    except Exception as e:
+        print(f"❌ Register Error: {e}")
+        return jsonify({"error": f"Lỗi server: {e}"}), 500
 
 # API xử lý đăng nhập
 @app.route('/login', methods=['POST'])

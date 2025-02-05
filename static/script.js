@@ -39,27 +39,36 @@ if (authContainer) {
         loginButton.addEventListener('click', async () => {
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-
+    
             try {
+                console.log("🔍 Sending login request:", { username, password }); // Debug log
+    
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    window.location.href = data.redirect_url; // Điều hướng đến URL mới
-                } else {
-                    alert(data.error || 'Đăng nhập thất bại.');
+    
+                const text = await response.text(); // Đọc raw text trước
+                console.log("🔍 Server response:", text); // Debug log
+    
+                try {
+                    const data = JSON.parse(text); // Chuyển thành JSON
+                    if (response.ok) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert(data.error || 'Đăng nhập thất bại.');
+                    }
+                } catch (jsonError) {
+                    console.error('❌ Không thể parse JSON:', jsonError);
+                    alert('Lỗi server, không nhận được JSON hợp lệ.');
                 }
             } catch (error) {
-                console.error('Đăng nhập thất bại:', error);
-                alert('Đăng nhập thất bại.');
+                console.error('❌ Không thể kết nối đến server:', error);
+                alert('Không thể kết nối đến server.');
             }
         });
-    }
+    }    
 }
 
 // Logic cho trang chat
