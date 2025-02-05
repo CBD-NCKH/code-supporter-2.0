@@ -199,7 +199,8 @@ if (chatContainer) {
 
     // Xử lý sự kiện nhấn phím Enter
     userInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Ngăn chặn xuống dòng mặc định
             sendMessage();
         }
     });
