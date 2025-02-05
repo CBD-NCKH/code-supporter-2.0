@@ -349,3 +349,19 @@ body.light-mode #welcome-message {
 .copy-btn:hover {
     background: #45a049;
 }
+
+pre {
+    white-space: pre-wrap; /* Giữ nguyên khoảng trắng và xuống dòng */
+    word-wrap: break-word;  /* Đảm bảo nội dung không tràn khỏi khung */
+    font-family: monospace; /* Sử dụng font monospace cho code */
+    padding: 10px;
+    background: #2d2d2d;
+    color: #ffffff;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+code {
+    display: block; /* Đảm bảo code hiển thị theo dạng block */
+    white-space: pre-wrap;
+}
