@@ -127,7 +127,7 @@ if (chatContainer) {
             content = marked.parse(content);
         }
     
-        messageDiv.innerHTML = content;
+        messageDiv.innerHTML = content.replace(/\n/g, '<br>');
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     
