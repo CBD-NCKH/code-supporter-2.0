@@ -10,29 +10,29 @@ import json
 # 🔹 Khởi tạo Together AI Client (không cần Hugging Face nữa)
 client = Together(api_key=os.getenv("KEY"))
 
-# 🔹 Hàm gọi API của DeepSeek qua Together AI
-def generate_response_deepseek(prompt):
+# 🔹 Hàm gọi API của Meta Llama 3.3 70B
+def generate_response_llama(prompt):
     try:
         messages = [{"role": "user", "content": prompt}]
-        print(f"🔍 Sending request to DeepSeek: {messages}")  # Debug log
+        print(f"🔍 Sending request to Meta Llama: {messages}")  # Debug log
 
         response = client.chat.completions.create(
-            model="deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
+            model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
             messages=messages,
             max_tokens=1024,  
             temperature=0.7,
             top_p=0.7,
             top_k=50,
             repetition_penalty=1,
-            stop=["<| end_of_sentence |>"],
+            stop=["<|eot_id|>", "<|eom_id|>"],
             stream=False  
         )
 
-        print(f"✅ DeepSeek response: {response}")  # Debug log
+        print(f"✅ Meta Llama response: {response}")  # Debug log
         return response.choices[0].message.content
 
     except Exception as e:
-        print(f"❌ Error in DeepSeek API: {e}")
+        print(f"❌ Error in Meta Llama API: {e}")
         return f"Error generating response: {e}"
 
 # Kết nối Google Sheets
@@ -164,7 +164,7 @@ def api():
             f"Câu hỏi của người dùng: {user_message}\n\n"
         )
         
-        bot_reply = generate_response_deepseek(prompt)
+        bot_reply = generate_response_llama(prompt)
         
         save_to_google_sheet(sheet, username, "user", user_message)
         save_to_google_sheet(sheet, username, "assistant", bot_reply)
