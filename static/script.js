@@ -198,10 +198,14 @@ if (chatContainer) {
     sendButton.addEventListener('click', sendMessage);
 
     // Xử lý sự kiện nhấn phím Enter
-    userInput.addEventListener('keypress', (event) => {
+    userInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault(); // Ngăn chặn xuống dòng mặc định
+            event.preventDefault(); // Ngăn xuống dòng
             sendMessage();
+        } else if (event.key === 'Enter' && event.shiftKey) {
+            event.preventDefault();
+            userInput.value += '\n'; // Thêm xuống dòng vào nội dung
         }
     });
 }
+
