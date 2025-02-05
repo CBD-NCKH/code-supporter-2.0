@@ -1,4 +1,4 @@
-from huggingface_hub import InferenceClient
+from together import Together
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import gspread
@@ -7,28 +7,32 @@ import hashlib
 import os
 import json
 
-# Khởi tạo InferenceClient của DeepSeek
-client = InferenceClient(
-    provider="together",
-    api_key = os.getenv("KEY")
-)
+# 🔹 Khởi tạo Together AI Client (không cần Hugging Face nữa)
+client = Together(api_key=os.getenv("KEY"))
 
-# Hàm gọi API của DeepSeek để sinh văn bản
+# 🔹 Hàm gọi API của DeepSeek qua Together AI
 def generate_response_deepseek(prompt):
     try:
-        messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-        completion = client.chat.completions.create(
-            model="deepseek-ai/DeepSeek-R1",
+        messages = [{"role": "user", "content": prompt}]
+        print(f"🔍 Sending request to DeepSeek: {messages}")  # Debug log
+
+        response = client.chat.completions.create(
+            model="deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
             messages=messages,
-            max_tokens=5000
+            max_tokens=1024,  
+            temperature=0.7,
+            top_p=0.7,
+            top_k=50,
+            repetition_penalty=1,
+            stop=["<| end_of_sentence |>"],
+            stream=False  
         )
-        return completion.choices[0].message
+
+        print(f"✅ DeepSeek response: {response}")  # Debug log
+        return response.choices[0].message.content
+
     except Exception as e:
+        print(f"❌ Error in DeepSeek API: {e}")
         return f"Error generating response: {e}"
 
 # Kết nối Google Sheets
