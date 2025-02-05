@@ -130,33 +130,30 @@ if (chatContainer) {
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // 🛠 **Tự động phát hiện code và thêm nút "Sao chép"**
-        let codeBlocks = content.match(/```([\s\S]*?)```/g);
-        if (codeBlocks) {
-            codeBlocks.forEach((block) => {
-                let codeContent = block.replace(/```[\w]*\n?/, "").replace(/```/, "").trim(); // Xóa dấu ```
-                let formattedCode = `
-                    <div class="code-container">
-                        <pre><code>${codeContent}</code></pre>
-                        <button class="copy-btn">📋 Sao chép</button>
-                    </div>
-                `;
+        // 🛠 **Tự động phát hiện code sau khi nội dung được render**
+        setTimeout(() => {
+            messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
+                const copyButton = document.createElement("button");
+                copyButton.classList.add("copy-btn");
+                copyButton.innerText = "📋 Sao chép";
 
-                // Thay thế đoạn code trong nội dung tin nhắn
-                messageDiv.innerHTML = messageDiv.innerHTML.replace(block, formattedCode);
-            });
-
-            // Thêm sự kiện "Sao chép" cho nút
-            messageDiv.querySelectorAll(".copy-btn").forEach((button) => {
-                button.addEventListener("click", () => {
-                    let code = button.previousElementSibling.innerText;
-                    navigator.clipboard.writeText(code).then(() => {
-                        button.innerText = "✅ Đã sao chép!";
-                        setTimeout(() => (button.innerText = "📋 Sao chép"), 2000);
+                copyButton.addEventListener("click", () => {
+                    navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+                        copyButton.innerText = "✅ Đã sao chép!";
+                        setTimeout(() => (copyButton.innerText = "📋 Sao chép"), 2000);
                     }).catch(err => console.error("Lỗi sao chép:", err));
                 });
+
+                // Tạo container chứa code và nút sao chép
+                const container = document.createElement("div");
+                container.classList.add("code-container");
+
+                // Chuyển codeBlock và nút vào trong container
+                codeBlock.parentElement.replaceWith(container);
+                container.appendChild(codeBlock);
+                container.appendChild(copyButton);
             });
-        }
+        }, 100); // Đợi 100ms để Markdown hoàn thành parse
     }
 
     // Hàm gửi yêu cầu tới API
