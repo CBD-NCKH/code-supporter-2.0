@@ -123,20 +123,23 @@ if (chatContainer) {
         messageDiv.classList.add('message', sender);
         
         if (isMarkdown) {
-            // ✅ Parse Markdown và bảo toàn dấu xuống dòng
-            content = marked.parse(content).replace(/<pre>/g, '<pre class="code-container">');
+            // ✅ Chuyển Markdown thành HTML và bảo toàn code block
+            content = marked.parse(content);
         }
     
         messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     
-        // 🛠 **Tự động phát hiện code sau khi nội dung được render**
+        // 🛠 **Tự động phát hiện và sửa lỗi hiển thị code**
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
-                // ✅ Fix lỗi mất xuống dòng
-                codeBlock.style.whiteSpace = "pre-wrap"; // Giữ format xuống dòng
-                codeBlock.style.wordBreak = "break-word"; // Ngăn code bị cắt
+                // ✅ Fix lỗi mất xuống dòng và mất nội dung
+                let codeContent = codeBlock.innerText.trim(); 
+                if (codeContent.length === 0) {
+                    codeBlock.innerText = "⚠ Lỗi: Không có nội dung code!";
+                    return;
+                }
     
                 const copyButton = document.createElement("button");
                 copyButton.classList.add("copy-btn");
