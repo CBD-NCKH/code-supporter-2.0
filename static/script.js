@@ -121,37 +121,40 @@ if (chatContainer) {
     function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
-
+    
         if (isMarkdown) {
-            content = marked.parse(content);
+            content = marked.parse(content); // Parse Markdown trước
         }
-
+    
         messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
+    
         // 🛠 **Tự động phát hiện code sau khi nội dung được render**
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
                 const copyButton = document.createElement("button");
                 copyButton.classList.add("copy-btn");
                 copyButton.innerText = "📋 Sao chép";
-
+    
                 copyButton.addEventListener("click", () => {
                     navigator.clipboard.writeText(codeBlock.innerText).then(() => {
                         copyButton.innerText = "✅ Đã sao chép!";
                         setTimeout(() => (copyButton.innerText = "📋 Sao chép"), 2000);
                     }).catch(err => console.error("Lỗi sao chép:", err));
                 });
-
+    
                 // Tạo container chứa code và nút sao chép
                 const container = document.createElement("div");
                 container.classList.add("code-container");
-
-                // Chuyển codeBlock và nút vào trong container
-                codeBlock.parentElement.replaceWith(container);
+    
+                // **Fix lỗi mất xuống dòng**
+                codeBlock.style.whiteSpace = "pre-wrap"; // Giữ nguyên format xuống dòng
                 container.appendChild(codeBlock);
                 container.appendChild(copyButton);
+    
+                // Thay thế code block cũ bằng container mới
+                codeBlock.parentElement.replaceWith(container);
             });
         }, 100); // Đợi 100ms để Markdown hoàn thành parse
     }

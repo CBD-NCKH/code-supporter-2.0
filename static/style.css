@@ -322,6 +322,9 @@ body.light-mode #welcome-message {
     padding: 10px;
     overflow-x: auto;
     font-family: monospace;
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    display: block;
 }
 
 .copy-btn {
@@ -340,3 +343,4 @@ body.light-mode #welcome-message {
 .copy-btn:hover {
     background: #45a049;
 }
+
