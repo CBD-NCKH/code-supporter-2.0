@@ -13,13 +13,23 @@ client = Together(api_key=os.getenv("KEY"))
 # 🔹 Hàm gọi API của Meta Llama 3.3 70B
 def generate_response_llama(prompt):
     try:
-        messages = [{"role": "user", "content": prompt}]
+        system_prompt = (
+            "Bạn là một trợ lý viết code hỗ trợ học sinh với các bài tập lập trình được điều chỉnh và thay đổi bởi Châu Phúc Khang, học sinh chuyên toán khóa 2023-2026 của trường Phổ thông Năng Khiếu, ĐHQG - TPHCM dựa trên mô hình gốc là mô hình mã nguồn mở Meta Llama 3.3 70B. "
+            "Trước khi đưa ra code cụ thể cho học sinh, hãy mô tả logic của code và giải thích cách hoạt động. "
+            "Ngoài việc sinh code, bạn cũng có thể giải thích các thắc mắc liên quan đến lập trình."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},  # 🌟 Thêm system prompt vào đầu
+            {"role": "user", "content": prompt}
+        ]
+
         print(f"🔍 Sending request to Meta Llama: {messages}")  # Debug log
 
         response = client.chat.completions.create(
             model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
             messages=messages,
-            max_tokens=1024,  
+            max_tokens=1024,
             temperature=0.7,
             top_p=0.7,
             top_k=50,
