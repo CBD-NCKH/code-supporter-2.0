@@ -132,6 +132,11 @@ if (chatContainer) {
             });
         }
 
+        // 🔹 Chỉ thêm <br> cho tin nhắn của NGƯỜI DÙNG (Không ảnh hưởng tin nhắn bot)
+        if (sender === 'user') {
+            content = content.replace(/\n/g, '<br>');
+        }
+        
         messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
