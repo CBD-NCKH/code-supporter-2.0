@@ -333,6 +333,7 @@ body.light-mode #welcome-message {
     padding-right: 40px; 
 }
 
+/* Copy button */
 .copy-btn {
     position: absolute;
     top: 5px;
@@ -350,10 +351,11 @@ body.light-mode #welcome-message {
     background: #45a049;
 }
 
+/* Code block */
 pre {
-    white-space: pre-wrap; /* Giữ nguyên khoảng trắng và xuống dòng */
-    word-wrap: break-word;  /* Đảm bảo nội dung không tràn khỏi khung */
-    font-family: monospace; /* Sử dụng font monospace cho code */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
     padding: 10px;
     background: #2d2d2d;
     color: #ffffff;
@@ -361,7 +363,18 @@ pre {
     overflow-x: auto;
 }
 
-code {
-    display: block; /* Đảm bảo code hiển thị theo dạng block */
+pre code {
+    display: block;
     white-space: pre-wrap;
+}
+
+
+/* Giữ nguyên inline code trong đoạn văn bản không bị xuống dòng */
+p code, li code {
+    white-space: nowrap;
+    display: inline-block;
+    padding: 2px 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 0.95em;
 }
