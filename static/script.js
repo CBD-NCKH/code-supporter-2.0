@@ -126,8 +126,12 @@ if (chatContainer) {
             // ✅ Chuyển Markdown thành HTML và bảo toàn code block
             content = marked.parse(content);
 
-            // 🔹 Loại bỏ các thẻ <p> thừa do Markdown Parser tự động thêm vào
+            // 🛠 Loại bỏ các thẻ <p> thừa do Markdown Parser tự động thêm vào
             content = content.replace(/^<p>|<\/p>$/g, '');
+            // 🛠 Loại bỏ các <br> không mong muốn sau danh sách (<ul>)
+            content = content.replace(/<\/ul>\s*<br>/g, '</ul>');
+            // 🛠 Loại bỏ <br> dư thừa trong danh sách số thứ tự (<ol>)
+            content = content.replace(/<\/ol>\s*<br>/g, '</ol>');
             
             // 🔹 Giữ nguyên việc xuống dòng Shift + Enter nhưng không áp dụng vào <pre><code>
             content = content.replace(/(<pre><code[\s\S]*?<\/code><\/pre>)|(?:\n)/g, (match, codeBlock) => {
