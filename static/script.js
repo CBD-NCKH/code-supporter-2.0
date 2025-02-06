@@ -123,11 +123,11 @@ if (chatContainer) {
         messageDiv.classList.add('message', sender);
         
         if (isMarkdown) {
-            // ✅ Chuyển Markdown thành HTML và bảo toàn code block
-            content = marked.parse(content);
+            messageDiv.innerHTML = marked.parse(content); // Xử lý Markdown bình thường
+        } else {
+            messageDiv.innerHTML = content.replace(/\n/g, '<br>'); // Chỉ thay thế xuống dòng nếu không phải Markdown
         }
-    
-        messageDiv.innerHTML = content.replace(/\n/g, '<br>');
+        
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     
