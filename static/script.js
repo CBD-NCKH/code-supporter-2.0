@@ -126,6 +126,9 @@ if (chatContainer) {
             // ✅ Chuyển Markdown thành HTML và bảo toàn code block
             content = marked.parse(content);
 
+            // 🔹 Loại bỏ các thẻ <p> thừa do Markdown Parser tự động thêm vào
+            content = content.replace(/^<p>|<\/p>$/g, '');
+            
             // 🔹 Giữ nguyên việc xuống dòng Shift + Enter nhưng không áp dụng vào <pre><code>
             content = content.replace(/(<pre><code[\s\S]*?<\/code><\/pre>)|(?:\n)/g, (match, codeBlock) => {
                 return codeBlock ? codeBlock : '<br>';
@@ -136,7 +139,7 @@ if (chatContainer) {
         if (sender === 'user') {
             content = content.replace(/\n/g, '<br>');
         }
-        
+
         messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
