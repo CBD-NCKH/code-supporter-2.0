@@ -110,9 +110,9 @@ body.light-mode button {
 
 /* Container khung chat */
 #chat-container {
-    width: 90%;
-    max-width: 800px;
-    height: 80%;
+    width: 95%;
+    max-width: 1200px;
+    height: 85%;
     background: #1e1e1e;
     border-radius: 15px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
@@ -128,7 +128,7 @@ body.light-mode #chat-container {
 
 /* Watermark logo Chat CBD */
 #chat-container::before {
-    content: "Chat CBD";
+    content: "Code supporter 2.0";
     position: absolute;
     top: 50%;
     left: 50%;
