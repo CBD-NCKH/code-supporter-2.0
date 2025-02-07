@@ -128,7 +128,7 @@ body.light-mode #chat-container {
 
 /* Watermark logo Chat CBD */
 #chat-container::before {
-    content: "Code supporter 2.0";
+    content: "Code supporter";
     position: absolute;
     top: 50%;
     left: 50%;
