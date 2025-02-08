@@ -102,7 +102,7 @@ def get_user_conversation(sheet, username, max_rows=8):
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")  
 
 # Route mặc định để render giao diện
 @app.route('/')
