@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import eventlet
 import hashlib
 import os
 import json
@@ -102,7 +103,7 @@ def get_user_conversation(sheet, username, max_rows=8):
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*")  
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # Route mặc định để render giao diện
 @app.route('/')
@@ -233,4 +234,4 @@ def handle_message(data):
 # Chạy ứng dụng
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))  
-    socketio.run(app, host='0.0.0.0', port=port)
+    eventlet.wsgi.server(eventlet.listen('0.0.0.0', port=port), app)
