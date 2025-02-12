@@ -131,6 +131,60 @@ if (chatContainer) {
         document.getElementById('username-display').textContent = username;
     }
 
+    // Hàm thêm tin nhắn vào giao diện 
+    function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        
+        if (isMarkdown) {
+            // ✅ Chuyển Markdown thành HTML và bảo toàn code block
+            content = marked.parse(content);
+            content = content.replace(/^<p>|<\/p>$/g, '');
+            content = content.replace(/<\/ul>\s*<br>/g, '</ul>');
+            content = content.replace(/<\/ol>\s*<br>/g, '</ol>');
+            
+            // 🔹 Giữ nguyên việc xuống dòng Shift + Enter nhưng không áp dụng vào <pre><code>
+            content = content.replace(/(<pre><code[\s\S]*?<\/code><\/pre>)|(?:\n)/g, (match, codeBlock) => {
+                return codeBlock ? codeBlock : '<br>';
+            });
+        }
+        // 🔹 Chỉ thêm <br> cho tin nhắn của NGƯỜI DÙNG (Không ảnh hưởng tin nhắn bot)
+        if (sender === 'user') {
+            content = content.replace(/\n/g, '<br>');
+        }
+        messageDiv.innerHTML = content;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // 🛠 **Tự động phát hiện và sửa lỗi hiển thị code**
+        setTimeout(() => {
+            messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
+                console.log("🔍 Tìm thấy code block trước khi thay thế:", codeBlock.innerText);
+        
+                const container = document.createElement("div");
+                container.classList.add("code-container");
+        
+                const copyButton = document.createElement("button");
+                copyButton.classList.add("copy-btn");
+                copyButton.innerText = "📋 Sao chép";
+        
+                copyButton.addEventListener("click", () => {
+                    navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+                        copyButton.innerText = "✅ Đã sao chép!";
+                        setTimeout(() => (copyButton.innerText = "📋 Sao chép"), 2000);
+                    }).catch(err => console.error("Lỗi sao chép:", err));
+                });
+        
+                container.appendChild(codeBlock.cloneNode(true)); // Sử dụng clone để không mất nội dung
+                container.appendChild(copyButton);
+        
+                codeBlock.parentElement.replaceWith(container);
+        
+                console.log("✅ Sau khi thay thế:", container.outerHTML);
+            });
+        }, 100);
+    }
+    
+    // Hàm gửi yêu cầu tới API
     // Hàm gửi tin nhắn
     async function sendMessage() {
         const userMessage = userInput.value.trim();
@@ -139,30 +193,37 @@ if (chatContainer) {
         addMessage(userMessage, 'user');
         userInput.value = '';
 
+        showTypingIndicator(); // Hiển thị hiệu ứng "đang gõ"
         try {
             const response = await fetch(`/api?username=${username}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage }),
-            });
+@@ -196,32 +131,22 @@ if (chatContainer) {
 
             const data = await response.json();
 
+            removeTypingIndicator(); // Xóa hiệu ứng "đang gõ"
             if (data.reply) {
                 addMessage(data.reply, 'bot', true, 30);
             } else {
                 addMessage('Không nhận được phản hồi từ server.', 'bot');
             }
         } catch (error) {
+            removeTypingIndicator(); // Xóa hiệu ứng "đang gõ" nếu có lỗi
             console.error('Không thể kết nối tới server:', error);
             addMessage('Không thể kết nối tới server.', 'bot');
         }
     }
 
+    // Xử lý sự kiện click vào nút "Gửi"
     sendButton.addEventListener('click', sendMessage);
+    // Xử lý sự kiện nhấn phím Enter
     userInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Ngăn xuống dòng
+            sendMessage();
+        } else if (event.key === 'Enter' && event.shiftKey) {
             event.preventDefault();
+            userInput.value += '\n'; // Thêm xuống dòng vào nội dung
             sendMessage();
         }
     });
