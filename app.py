@@ -1,10 +1,8 @@
-from flask_socketio import SocketIO, emit, join_room
 from together import Together
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import eventlet
 import hashlib
 import os
 import json
@@ -103,7 +101,6 @@ def get_user_conversation(sheet, username, max_rows=8):
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # Route mặc định để render giao diện
 @app.route('/')
@@ -185,53 +182,7 @@ def api():
         print(f"Lỗi: {e}")
         return jsonify({"error": "Có lỗi xảy ra khi kết nối mô hình."}), 500
 
-# Hàm xử lý khi client gửi tin nhắn qua WebSocket
-@socketio.on('send_message')
-def handle_message(data):
-    username = data['username']
-    user_message = data['message']
-
-    print(f"🔍 Nhận tin nhắn từ {username}: {user_message}")
-    
-    # Kết nối tới Google Sheets
-    sheet = connect_google_sheet("CodesupporterHistory")
-    
-    # Kiểm tra xem người dùng đã tồn tại chưa
-    users = sheet.get_all_values()
-    user_exists = False
-    for row in users:
-        if len(row) >= 1 and row[0] == username:
-            user_exists = True
-            break
-    
-    # Nếu chưa có tài khoản, tạo tài khoản mới với mật khẩu mặc định
-    if not user_exists:
-        create_account(sheet, username, "dangkiongoai")
-
-    # Lấy lịch sử hội thoại gần nhất của người dùng
-    memory = get_user_conversation(sheet, username, max_rows=8)
-    memory_context = "\n".join([f"{row[1]}: {row[2]}" for row in memory if len(row) >= 3])
-    
-    # Tạo prompt cho Llama
-    prompt = (
-        f"Dữ liệu từ cơ sở dữ liệu:\n{memory_context}\n\n"
-        f"Câu hỏi của người dùng: {user_message}\n\n"
-    )
-
-    # Gọi hàm generate_response_llama để lấy phản hồi của bot
-    bot_reply = generate_response_llama(prompt)
-
-    # Lưu lịch sử hội thoại vào Google Sheets
-    save_to_google_sheet(sheet, username, "user", user_message)
-    save_to_google_sheet(sheet, username, "assistant", bot_reply)
-
-    # Tạo room cho mỗi người dùng dựa trên username
-    join_room(username)  # Gia nhập room theo username
-
-    # Gửi tin nhắn phản hồi về client chính (không broadcast)
-    emit('receive_message', {'bot': bot_reply}, room=username)
-
 # Chạy ứng dụng
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))  
-    eventlet.wsgi.server(eventlet.listen('0.0.0.0', port=port), app)
+    app.run(host='0.0.0.0', port=port)
