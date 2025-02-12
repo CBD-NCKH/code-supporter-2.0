@@ -7,7 +7,6 @@ if (authContainer) {
     const registerButton = document.getElementById('register-btn');
     const loginButton = document.getElementById('login-btn');
 
-    // Xử lý sự kiện Đăng ký
     if (registerButton) {
         registerButton.addEventListener('click', async () => {
             const username = document.getElementById('register-username').value;
@@ -23,7 +22,7 @@ if (authContainer) {
                 const data = await response.json();
 
                 if (response.ok) {
-                    window.location.href = data.redirect_url; // Điều hướng đến URL mới
+                    window.location.href = data.redirect_url;
                 } else {
                     alert(data.error || 'Đăng ký thất bại.');
                 }
@@ -34,7 +33,6 @@ if (authContainer) {
         });
     }
 
-    // Xử lý sự kiện Đăng nhập
     if (loginButton) {
         loginButton.addEventListener('click', async () => {
             const username = document.getElementById('login-username').value;
@@ -103,6 +101,19 @@ if (chatContainer) {
         closeChatButton.style.display = "none";
         chatToggleButton.style.display = "block";
     });
+
+    // Xử lý chuyển đổi chế độ sáng/tối
+    themeToggleButton.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        themeToggleButton.textContent = document.body.classList.contains('light-mode') ? '🌞' : '🌙';
+    });
+
+    // Duy trì chế độ sáng/tối khi tải lại trang
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        themeToggleButton.textContent = '🌞';
+    }
 
     // Lấy username từ query string
     const urlParams = new URLSearchParams(window.location.search);
