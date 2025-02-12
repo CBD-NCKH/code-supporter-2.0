@@ -77,29 +77,35 @@ if (chatContainer) {
     const themeToggleButton = document.getElementById('theme-toggle-button');
 
     // Ẩn khung chat ban đầu và thêm nút mở chat
-    chatContainer.style.display = "none";
+    chatContainer.classList.add("close"); // Thêm class để thu nhỏ ban đầu
 
     const chatToggleButton = document.createElement("div");
     chatToggleButton.id = "chat-toggle-button";
-    chatToggleButton.innerHTML = "💬"; 
+    chatToggleButton.innerHTML = "💬";
     document.body.appendChild(chatToggleButton);
 
     const closeChatButton = document.createElement("div");
     closeChatButton.id = "close-chat-button";
-    closeChatButton.innerHTML = "❌"; 
+    closeChatButton.innerHTML = "❌";
     document.body.appendChild(closeChatButton);
-    closeChatButton.style.display = "none"; 
+    closeChatButton.style.display = "none";
 
     chatToggleButton.addEventListener("click", () => {
-        chatContainer.style.display = "flex";
+        chatContainer.classList.remove("close");
+        chatContainer.classList.add("open");
+
         chatToggleButton.style.display = "none";
-        closeChatButton.style.display = "block";
+        closeChatButton.style.display = "flex";
     });
 
     closeChatButton.addEventListener("click", () => {
-        chatContainer.style.display = "none";
-        closeChatButton.style.display = "none";
-        chatToggleButton.style.display = "block";
+        chatContainer.classList.remove("open");
+        chatContainer.classList.add("close");
+
+        setTimeout(() => {
+            closeChatButton.style.display = "none";
+            chatToggleButton.style.display = "flex";
+        }, 300); // Chờ hiệu ứng chạy xong rồi ẩn nút
     });
 
     // Xử lý chuyển đổi chế độ sáng/tối

@@ -426,3 +426,45 @@ p code, li code {
 #close-chat-button:hover {
     transform: scale(1.1);
 }
+
+/* Hiệu ứng mở rộng chatbox */
+@keyframes expandChat {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Hiệu ứng thu nhỏ chatbox */
+@keyframes collapseChat {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+/* Ẩn chatbox theo animation */
+#chat-container {
+    display: flex;
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Khi mở chatbox */
+#chat-container.open {
+    animation: expandChat 0.3s ease-in-out forwards;
+}
+
+/* Khi đóng chatbox */
+#chat-container.close {
+    animation: collapseChat 0.3s ease-in-out forwards;
+}
