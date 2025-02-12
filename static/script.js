@@ -131,7 +131,30 @@ if (chatContainer) {
         document.getElementById('username-display').textContent = username;
     }
 
-    // Hàm thêm tin nhắn vào giao diện 
+    // Hàm hiển thị hiệu ứng "đang gõ"
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.classList.add('message', 'bot', 'typing');
+        typingDiv.innerHTML = `
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Hàm xóa hiệu ứng "đang gõ"
+    function removeTypingIndicator() {
+        const typingDiv = document.querySelector('.typing');
+        if (typingDiv) {
+            typingDiv.remove();
+        }
+    }
+
+    // Hàm thêm tin nhắn vào giao diện (CÓ TÍCH HỢP CHỨC NĂNG PHÁT HIỆN CODE)
     function addMessage(content, sender, isMarkdown = false, typingSpeed = 100) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
@@ -139,8 +162,12 @@ if (chatContainer) {
         if (isMarkdown) {
             // ✅ Chuyển Markdown thành HTML và bảo toàn code block
             content = marked.parse(content);
+
+            // 🛠 Loại bỏ các thẻ <p> thừa do Markdown Parser tự động thêm vào
             content = content.replace(/^<p>|<\/p>$/g, '');
+            // 🛠 Loại bỏ các <br> không mong muốn sau danh sách (<ul>)
             content = content.replace(/<\/ul>\s*<br>/g, '</ul>');
+            // 🛠 Loại bỏ <br> dư thừa trong danh sách số thứ tự (<ol>)
             content = content.replace(/<\/ol>\s*<br>/g, '</ol>');
             
             // 🔹 Giữ nguyên việc xuống dòng Shift + Enter nhưng không áp dụng vào <pre><code>
@@ -148,13 +175,16 @@ if (chatContainer) {
                 return codeBlock ? codeBlock : '<br>';
             });
         }
+
         // 🔹 Chỉ thêm <br> cho tin nhắn của NGƯỜI DÙNG (Không ảnh hưởng tin nhắn bot)
         if (sender === 'user') {
             content = content.replace(/\n/g, '<br>');
         }
+
         messageDiv.innerHTML = content;
         messagesDiv.appendChild(messageDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
         // 🛠 **Tự động phát hiện và sửa lỗi hiển thị code**
         setTimeout(() => {
             messageDiv.querySelectorAll("pre code").forEach((codeBlock) => {
@@ -185,7 +215,6 @@ if (chatContainer) {
     }
     
     // Hàm gửi yêu cầu tới API
-    // Hàm gửi tin nhắn
     async function sendMessage() {
         const userMessage = userInput.value.trim();
         if (!userMessage) return;
@@ -194,14 +223,18 @@ if (chatContainer) {
         userInput.value = '';
 
         showTypingIndicator(); // Hiển thị hiệu ứng "đang gõ"
+
         try {
             const response = await fetch(`/api?username=${username}`, {
                 method: 'POST',
-@@ -196,32 +131,22 @@ if (chatContainer) {
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessage }),
+            });
 
             const data = await response.json();
 
             removeTypingIndicator(); // Xóa hiệu ứng "đang gõ"
+
             if (data.reply) {
                 addMessage(data.reply, 'bot', true, 30);
             } else {
@@ -216,6 +249,7 @@ if (chatContainer) {
 
     // Xử lý sự kiện click vào nút "Gửi"
     sendButton.addEventListener('click', sendMessage);
+
     // Xử lý sự kiện nhấn phím Enter
     userInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -224,7 +258,6 @@ if (chatContainer) {
         } else if (event.key === 'Enter' && event.shiftKey) {
             event.preventDefault();
             userInput.value += '\n'; // Thêm xuống dòng vào nội dung
-            sendMessage();
         }
     });
 }
