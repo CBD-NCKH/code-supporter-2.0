@@ -202,10 +202,10 @@ body.light-mode #input-area {
 
 #user-input {
     width: 100%;
-    height: 60px; /* Điều chỉnh chiều cao */
-    resize: none; /* Không cho phép thay đổi kích thước */
-    white-space: pre-wrap; /* Giữ nguyên định dạng xuống dòng */
-    overflow-y: auto; /* Hiển thị thanh cuộn nếu nội dung quá dài */
+    height: 60px; 
+    resize: none; 
+    white-space: pre-wrap; 
+    overflow-y: auto; 
     padding: 10px;
     border-radius: 10px;
     font-size: 1rem;
