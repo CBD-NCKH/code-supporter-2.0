@@ -7,7 +7,7 @@ import hashlib
 import os
 import json
 
-# 🔹 Khởi tạo Together AI Client (không cần Hugging Face nữa)
+# 🔹 Khởi tạo Together AI Client
 client = Together(api_key=os.getenv("KEY"))
 
 # 🔹 Hàm gọi API của Meta Llama 3.3 70B
@@ -15,17 +15,16 @@ def generate_response_llama(prompt):
     try:
         system_prompt = (
             "Bạn là một trợ lý viết code hỗ trợ học sinh với các bài tập lập trình được điều chỉnh và thay đổi bởi Châu Phúc Khang, học sinh chuyên toán khóa 2023-2026 của trường Phổ thông Năng Khiếu, ĐHQG - TPHCM dựa trên mô hình gốc là mô hình mã nguồn mở Meta Llama 3.3 70B. "
-            "Trước khi đưa ra code cụ thể cho học sinh, hãy mô tả logic của code và giải thích cách hoạt động. "
+            "Trước khi đưa ra code cụ thể cho học sinh, hãy mô tả logic của code và giải thích cách hoạt động. Lưu ý, chỉ đưa code trực tiếp khi và chỉ khi học sinh yêu cầu rõ ràng trong tin nhắn, nếu không thì tập trung vào giải thích logic và ý tưởng giải giúp học sinh phát triển tư duy lập trình. "
             "Ngoài việc sinh code, bạn cũng có thể giải thích các thắc mắc liên quan đến lập trình và nếu người dùng có hỏi điều gì ngoài lập trình thì bạn vẫn đối thoại được như bình thường"
         )
 
         messages = [
-            {"role": "system", "content": system_prompt},  # 🌟 Thêm system prompt vào đầu
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ]
 
-        print(f"🔍 Sending request to Meta Llama: {messages}")  # Debug log
-
+        print(f"🔍 Sending request to Meta Llama: {messages}")  
         response = client.chat.completions.create(
             model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
             messages=messages,
@@ -37,8 +36,6 @@ def generate_response_llama(prompt):
             stop=["<|eot_id|>", "<|eom_id|>"],
             stream=False  
         )
-
-        print(f"✅ Meta Llama response: {response}")  # Debug log
         return response.choices[0].message.content
 
     except Exception as e:
@@ -48,14 +45,8 @@ def generate_response_llama(prompt):
 # Kết nối Google Sheets
 def connect_google_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    
-    # Lấy thông tin credentials từ biến môi trường
     creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
-    
-    # Chuyển JSON từ chuỗi (string) thành dictionary
     creds_dict = json.loads(creds_json)
-    
-    # Kết nối với Google Sheets
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client_gs = gspread.authorize(creds)
     sheet = client_gs.open(sheet_name).sheet1
@@ -86,11 +77,11 @@ def authenticate_user(sheet, username, password):
 
 # Hàm lưu lịch sử hội thoại vào Google Sheets
 def save_to_google_sheet(sheet, username, role, content):
-    row = [""] * 3  # Tạo hàng trống với 4 cột
-    row[0] = username  # Lưu username vào cột 1
-    row[1] = role      # Lưu role vào cột 3
-    row[2] = content   # Lưu content vào cột 4
-    sheet.append_row(row)  # Thêm hàng mới vào Google Sheets
+    row = [""] * 3  
+    row[0] = username
+    row[1] = role
+    row[2] = content
+    sheet.append_row(row)  
 
 # Hàm lấy hội thoại gần nhất của người dùng
 def get_user_conversation(sheet, username, max_rows=8):
@@ -114,11 +105,11 @@ def chat():
         return "Missing username parameter", 400  
     return render_template("chat.html", username=username)
 
+# API xử lý đăng kíkí
 @app.route('/register', methods=['POST'])
 def register():
     try:
         data = request.json
-        print(f"🔍 Register request received: {data}")  # Debug log
 
         if not data or "username" not in data or "password" not in data:
             return jsonify({"error": "Thiếu thông tin đăng ký."}), 400
